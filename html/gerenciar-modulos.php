@@ -1,5 +1,12 @@
 <?php
 session_start();
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $input_hidden = $_POST['txt_nome_do_modulo'];
+    $_SESSION['nome_do_modulo'] = $input_hidden;
+    header("Location: gerenciar-conteudo.php?id=" . $modulo['id_mod']);
+    exit();
+}
+
 ?>
 
 
@@ -38,7 +45,7 @@ session_start();
     <div class = "container-p">
         <div class = "navegacao">
             <ul style="padding: 0px 0px 0px 0px; margin: 0px 0px 0px 0px;">
-                <li>
+            <li>
                     <a href = "#">
                         <span class = "icone">
                             <img src="" alt="">
@@ -48,20 +55,35 @@ session_start();
                 </li>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "aluno")
-                {?>
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == false)
+                    {?>
                     <li>
-                        <a href = "perfil.php">
+                        <a href = "renovarAssinatura.php">
                             <span class = "icone">
-                                <ion-icon name = "home-outline"></ion-icon>
+                                <ion-icon name="repeat-outline"></ion-icon>
                             </span>
-                            <span class = "titulo">Home</span>
+                            <span class = "titulo">Renovar Assinatura</span>
                         </a>
                     </li>
-                <?php }?>
+                <?php } }?>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "professor") // ALGUM ERRO NA VARIAVEL , VERIFICAAAAAAAAAAAAAAAR
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
+
+                <li>
+                    <a href = "perfil.php">
+                        <span class = "icone">
+                            <ion-icon name = "home-outline"></ion-icon>
+                        </span>
+                        <span class = "titulo">Home</span>
+                    </a>
+                </li>
+                <?php } ?>
+
+                <?php 
+                if($_SESSION["user"]['tabela'] == "professor")
                 {?>
                     <li>
                     <a href = "gerenciar-cursos.php">
@@ -71,26 +93,45 @@ session_start();
                         <span class = "titulo">Gerenciar Cursos</span>
                     </a>
                     </li>
-                <?php }?>
+                <?php } ?>
 
-
+                <?php
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == true)
+                    {?>
+                    <li>
+                        <a href = "cursos.php">
+                            <span class = "icone">
+                                <ion-icon name="library-outline"></ion-icon>
+                            </span>
+                            <span class = "titulo">Cursos</span>
+                        </a>
+                    </li>
+                <?php }}
+                elseif($_SESSION["user"]['tabela'] == "professor")
+                {?>
                 <li>
-                    <a href = "#">
+                    <a href = "cursos.php">
                         <span class = "icone">
                             <ion-icon name="library-outline"></ion-icon>
                         </span>
                         <span class = "titulo">Cursos</span>
                     </a>
-                    </li>
+                </li>
+                <?php } ?>
 
+                <?php 
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
                 <li>
-                    <a href = "#">
+                    <a href = "certificados.php">
                         <span class = "icone">
                             <ion-icon name="trophy-outline"></ion-icon>
                         </span>
                         <span class = "titulo">Certificados</span>
                     </a>
                 </li>
+                <?php } ?>
 
                 <li>
                     <a href = "editar-perfil.php">
@@ -109,7 +150,6 @@ session_start();
                         <span class = "titulo">Sair</span>
                     </a>
                 </li>
-
             </ul>
         </div>
         
@@ -120,14 +160,21 @@ session_start();
                 </div>
 
                 <div class = "user">
-                    
-                    <img src = "../img/avaliacao/pic-1.png" alt = "Foto do Usuário">
+                    <a href="editar-perfil.php">
+                        <img src="<?php if($_SESSION["user"]['tabela'] == "aluno") { echo $_SESSION['dados_user']['img']; } elseif($_SESSION["user"]['tabela'] == "professor") { echo "../img/icon.png";} ?>" alt="foto de perfil">
+                    </a>
                 </div>
             </div>
             
             
                 <!--ADICIONAAAAAAAAAAAAR AQUII VINICIUUUSSSSSSSSS-->
+            <?php
+            include('../php/config.php');
 
+            $stmt = $pdo->query('SELECT * FROM modulos');
+            $cursos = $stmt->fetchAll();
+            ?>
+            
             <?php
             include('../php/config.php');
 
@@ -140,6 +187,7 @@ session_start();
             // Armazene o ID do curso na variável de sessão
             $stmt = $pdo->query('SELECT * FROM modulos WHERE id_curso = ' . $_SESSION['id_do_curso']);
             $modulos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $_SESSION['$modulos'] = $modulos;
             ?>
 
             <header>
@@ -147,9 +195,17 @@ session_start();
             </header>
 
             <div class="container my-5">
-                <a href="gerenciar-modulos-create.php" class="btn btn-success add-course mb-4">Criar Novo Módulo</a>
+                <!--Botão tem que desaparecer após ser criado 3 módulos-->
+                <?php
+                    include_once '../php/metodos_principais.php';
+                    $metodos_principais = new metodos_principais();
+                    $result = $metodos_principais->verificarModulos($_SESSION['id_do_curso']);
+                    
+                    if($result == false){ ?>
+                    <a href="gerenciar-modulos-create.php" class="btn btn-success add-course mb-4">Criar Novo Módulo</a>
+                <?php }?>
 
-                <div class="row">
+                <form class="row" method="POST">
                     <?php foreach ($modulos as $modulo): ?>
                     <div class="col-md-4 mb-4">
                         <div class="card h-100">
@@ -159,13 +215,16 @@ session_start();
                                 <p class="card-text"><?php echo htmlspecialchars($modulo['descricao_mod']); ?></p>
                             </div>
                             <div class="card-footer">
-                                <a href="gerenciar-cursos-edit.php?id=<?php echo $modulo['id_mod']; ?>" class="btn btn-primary">Editar</a>
-                                <a href="gerenciar-modulos.php?id=<?php echo $modulo['id_mod']; ?>" class="btn btn-warning">Conteúdo</a>
+                                <a href="gerenciar-modulos-edit.php?id_mod=<?php echo $modulo['id_mod']; ?>" class="btn btn-primary">Editar</a>
+                                <button type="button" class="btn_modulo btn btn-warning">Conteúdo</button>
                                 <a href="../php/delete_mod.php?id_mod=<?php echo $modulo['id_mod']; ?>" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja deletar este módulo?')">Deletar</a>
                             </div>
                         </div>
                     </div>
                     <?php endforeach; ?>
+                    
+                  <input type="hidden" name="txt_nome_do_modulo" class="txt_nome_do_modulo" value="">
+                  </form>
                 </div>
             </div>
 
@@ -173,5 +232,24 @@ session_start();
 
 
         </div>
+        <script>
+        // Seleciona todos os botões de módulo
+        let btn_conteudos = document.querySelectorAll(".btn_modulo");
+        let input_hidden_nome_modulo = document.querySelector('.txt_nome_do_modulo');
+
+        // Itera sobre cada botão e adiciona um evento de clique
+        btn_conteudos.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                // Localiza o título do curso no mesmo cartão do botão clicado
+                let nome_modulo = btn.closest('.card').querySelector('.card-title').textContent;
+                
+                // Define o valor do curso no input oculto
+                input_hidden_nome_modulo.value = nome_modulo;
+                
+                // Envia o formulário
+                btn.closest('form').submit();
+            });
+        });
+    </script>
 </body>
 </html>

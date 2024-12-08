@@ -55,7 +55,7 @@
     <div class = "container-p">
         <div class = "navegacao">
             <ul style="padding: 0px 0px 0px 0px; margin: 0px 0px 0px 0px;">
-                <li>
+            <li>
                     <a href = "#">
                         <span class = "icone">
                             <img src="" alt="">
@@ -65,19 +65,36 @@
                 </li>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "aluno")
-                {?>
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == false)
+                    {?>
                     <li>
-                        <a href = "perfil.php">
+                        <a href = "renovarAssinatura.php">
                             <span class = "icone">
-                                <ion-icon name = "home-outline"></ion-icon>
+                                <ion-icon name="repeat-outline"></ion-icon>
                             </span>
-                            <span class = "titulo">Home</span>
+                            <span class = "titulo">Renovar Assinatura</span>
                         </a>
                     </li>
-                <?php }?>
-                 
-                <?php if($_SESSION["user"]['tabela'] == "professor"){?>
+                <?php } }?>
+
+                <?php 
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
+
+                <li>
+                    <a href = "perfil.php">
+                        <span class = "icone">
+                            <ion-icon name = "home-outline"></ion-icon>
+                        </span>
+                        <span class = "titulo">Home</span>
+                    </a>
+                </li>
+                <?php } ?>
+
+                <?php 
+                if($_SESSION["user"]['tabela'] == "professor")
+                {?>
                     <li>
                     <a href = "gerenciar-cursos.php">
                         <span class = "icone">
@@ -86,26 +103,45 @@
                         <span class = "titulo">Gerenciar Cursos</span>
                     </a>
                     </li>
-                <?php }?>
+                <?php } ?>
 
-
+                <?php
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == true)
+                    {?>
+                    <li>
+                        <a href = "cursos.php">
+                            <span class = "icone">
+                                <ion-icon name="library-outline"></ion-icon>
+                            </span>
+                            <span class = "titulo">Cursos</span>
+                        </a>
+                    </li>
+                <?php }}
+                elseif($_SESSION["user"]['tabela'] == "professor")
+                {?>
                 <li>
-                    <a href = "#">
+                    <a href = "cursos.php">
                         <span class = "icone">
                             <ion-icon name="library-outline"></ion-icon>
                         </span>
                         <span class = "titulo">Cursos</span>
                     </a>
-                    </li>
+                </li>
+                <?php } ?>
 
+                <?php 
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
                 <li>
-                    <a href = "#">
+                    <a href = "certificados.php">
                         <span class = "icone">
                             <ion-icon name="trophy-outline"></ion-icon>
                         </span>
                         <span class = "titulo">Certificados</span>
                     </a>
                 </li>
+                <?php } ?>
 
                 <li>
                     <a href = "editar-perfil.php">
@@ -124,7 +160,6 @@
                         <span class = "titulo">Sair</span>
                     </a>
                 </li>
-
             </ul>
         </div>
         
@@ -134,7 +169,9 @@
                     <ion-icon name = "menu-outline"></ion-icon>
                 </div>
                 <div class = "user">  
-                    <img src = "../img/avaliacao/pic-1.png" alt = "Foto do Usuário">
+                    <a href="editar-perfil.php">
+                        <img src="<?php if($_SESSION["user"]['tabela'] == "aluno") { echo $_SESSION['dados_user']['img']; } elseif($_SESSION["user"]['tabela'] == "professor") { echo "../img/icon.png";} ?>" alt="foto de perfil">
+                    </a>
                 </div>
             </div>
             

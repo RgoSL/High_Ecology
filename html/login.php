@@ -5,36 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="../css/lg.css">
-    <title>High Ecology</title>
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link rel="stylesheet" href="../css/all.css">
+    <script src="../js/main.js" defer></script>
+    <title>Login - High Ecology</title>
+
 </head>
 <body>
+
+    <!--COMEÇO DA NAVBAR-->
+    <nav class="nav">
+        <a href="../index.html" class="logo"><img src="../img/logo-tres.svg" alt="logo"></a>
+        <div class="menu-btn">
+            <i class="fa fa-bars fa-2x" onclick="menuShow()"></i>
+        </div>
+        <ul>
+            <li><a href="../html/planos.php" class="active"> Matricule-se</a></li>
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="../html/especializacoes.php">Especializações</a></li>
+            <li><a href="../html/login.php">Login</a></li>
+        </ul>
+    </nav>
+    <!--FINAL DA NAVBAR-->
+
     <div class="container">
         <div class="containerContent">
             <h3><i>Bem-Vindo(a)</i></h3>
-            <h1><i>Pode Entrar</i> </h1>
+            <h1><i>Entrar na conta</i> </h1>
 
             
             <form action="#" method="POST">
-                <label for="email"><i>E-mail</i></label>
+                <label for="email"><i>Email</i></label>
                 <div class="inputRow">
-                    <input type="email" name="email" maxlength="65" placeholder="alguem@gmail.com" required> 
+                    <input type="email" name="email" maxlength="65" placeholder="Email" required> 
                 </div>
                 <label for="password"><i>Senha</i></label>
                 <div class="inputRow">
-                    <input type="password" id="password" name="password" maxlength="16" placeholder="Sua senha aqui" required> 
+                    <input type="password" id="password" name="password" maxlength="16" placeholder="Senha" required> 
                     <span id="password-eye"><i class="ri-eye-off-line"></i> </span>
                 </div>
-                <div class="inputES" id="password-recovery">
-                    <a href="#"> <i> Esqueci Minha Senha</i></a>
-                </div>
-                <button type="submit" name="btn_entrar"><i>LOGIN</i></button>
+                <button type="submit" name="btn_entrar"><i>Login</i></button>
             </form>
-            <h6>Fazer login com</h6>
-            <div class="logins">
-                <a href="#"> <img src="../img/login/google.png" alt="Google"></a>
-                <a href="#"> <img src="../img/login/github.png" alt="Github"></a>
-                <a href="#"> <img src="../img/login/facebook.png" alt="Facebook"></a>
-            </div>
             <p>Ainda não é aluno? <a href="cadastro.php">Matrícule-se!</a></p>
         </div>
         <div class="containerImg">
@@ -50,7 +61,7 @@
 
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (isset($_POST['btn_entrar'])) {
-            include_once '..\php/metodos_principais.php';
+            include_once '../php/metodos_principais.php';
             $metodos_principais = new metodos_principais();
 
             $email = $_POST['email'];
@@ -66,11 +77,20 @@
             if ($_SESSION["user"] && is_array($_SESSION["user"])) {
                 if ($_SESSION["user"]['tabela'] === "aluno") {
                     $_SESSION["dados_user"] = $metodos_principais->getAlunoPorId($_SESSION["user"]['id']);
-                    header("Location: perfil.php");
-                    exit();
+                    $metodos_principais->passouUmMesDesdeUltimaAssinatura($_SESSION["user"]['id']);
+                    
+                    if($_SESSION['dados_user']['matriculado'] == true){
+                        header("Location: perfil.php");
+                        exit();
+                    }
+                    elseif($_SESSION['dados_user']['matriculado'] == false){
+                        header("Location: renovarAssinatura.php");
+                        exit();
+                    }
+
                 } else if ($_SESSION["user"]['tabela'] === "professor") {
                     $_SESSION['dados_user'] = $metodos_principais->getProfessorPorId($_SESSION['user']['id']);
-                    header("Location: perfil.php");
+                    header("Location: gerenciar-cursos.php");
                     exit();
                 }
             } else {

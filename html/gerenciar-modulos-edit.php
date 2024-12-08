@@ -1,30 +1,53 @@
 <?php
-    session_start();
-            include('../php/config.php');
+session_start();
+include('../php/config.php');
 
-            $id_mod = $_GET['id_mod'];
-            $stmt = $pdo->prepare('SELECT * FROM modulos WHERE id_mod = ?');
-            $stmt->execute([$id_mod]);
-            $course = $stmt->fetch();
+// Verifica se o ID do módulo foi fornecido
+$id_mod = isset($_GET['id_mod']) ? $_GET['id_mod'] : null;
+if ($id_mod === null) {
+    die('ID do módulo não fornecido.');
+}
 
-            if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-                $titulo_mod = $_POST['titulo_mod'];
-                $descricao_mod = $_POST['descricao_mod'];
-                $image_mod = $modulo['image_mod'];
+// Prepara a consulta para buscar o módulo
+$stmt = $pdo->prepare('SELECT * FROM modulos WHERE id_mod = ?');
+$stmt->execute([$id_mod]);
+$modulo = $stmt->fetch();
 
-                if (!empty($_FILES['image_mod']['name'])) {
-                    $image = $_FILES['image_mod']['name'];
-                    $target_dir = "../img/uploads/";
-                    $target_file = $target_dir . basename($_FILES['image_mod']['name']);
-                    move_uploaded_file($_FILES['image_mod']['tmp_name'], $target_file);
-                }
+// Verifica se o módulo foi encontrado
+if (!$modulo) {
+    die('Módulo não encontrado.');
+}
 
-                $stmt = $pdo->prepare('UPDATE modulos SET titulo_mod = ?, descricao_mod = ?, image_mod = ? WHERE id_mod = ?');
-                $stmt->execute([$titulo_mod, $descricao_mod, $image_mod, $id_mod]);
+// Se for uma requisição POST, processa os dados do formulário
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $titulo_mod = $_POST['titulo_mod'];
+    $descricao_mod = $_POST['descricao_mod'];
+    $image_mod = $modulo['image_mod']; // Define a imagem atual como padrão
+    $id_curso = $_SESSION['id_do_curso'];
 
-                header('Location: gerenciar-modulos.php'); 
-            }
+    // Processa o upload da imagem, se fornecida
+    if (!empty($_FILES['imagem_mod']['name'])) {
+        $imagem1 = basename($_FILES['imagem_mod']['name']);
+        $target_dir = "../img/uploads/";
+        $target_file = $target_dir . $imagem1;
+
+        if (move_uploaded_file($_FILES['imagem_mod']['tmp_name'], $target_file)) {
+            echo "Imagem atualizada com sucesso!";
+        } else {
+            echo "Erro ao enviar a imagem 1!";
+        }
+    }
+
+    // Atualiza os dados do módulo
+    $stmt = $pdo->prepare('UPDATE modulos SET id_curso = ?, titulo_mod = ?, descricao_mod = ?, image_mod = ? WHERE id_mod = ?');
+    $stmt->execute([$id_curso, $titulo_mod, $descricao_mod, $image_mod, $id_mod]);
+
+    // Redireciona após a atualização
+    header('Location: gerenciar-modulos.php');
+    exit();
+}
 ?>
+
 
 
 <!DOCTYPE html>
@@ -39,6 +62,8 @@
     <link rel="stylesheet" href="../css/all.css">
 
     <link rel="stylesheet" href="../css/all.css">
+    <link rel="stylesheet" href="../css/forms.css">
+
     <link rel="stylesheet" href="../css/conteudo-main-logado.css">
     <?php  if($_SESSION["user"]['tabela'] == "professor") {?>
         <link rel="stylesheet" href="../css/leftnavbarprofessor.css">
@@ -62,7 +87,7 @@
     <div class = "container-p">
         <div class = "navegacao">
             <ul style="padding: 0px 0px 0px 0px; margin: 0px 0px 0px 0px;">
-                <li>
+            <li>
                     <a href = "#">
                         <span class = "icone">
                             <img src="" alt="">
@@ -72,20 +97,35 @@
                 </li>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "aluno")
-                {?>
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == false)
+                    {?>
                     <li>
-                        <a href = "perfil.php">
+                        <a href = "renovarAssinatura.php">
                             <span class = "icone">
-                                <ion-icon name = "home-outline"></ion-icon>
+                                <ion-icon name="repeat-outline"></ion-icon>
                             </span>
-                            <span class = "titulo">Home</span>
+                            <span class = "titulo">Renovar Assinatura</span>
                         </a>
                     </li>
-                <?php }?>
+                <?php } }?>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "professor") // ALGUM ERRO NA VARIAVEL , VERIFICAAAAAAAAAAAAAAAR
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
+
+                <li>
+                    <a href = "perfil.php">
+                        <span class = "icone">
+                            <ion-icon name = "home-outline"></ion-icon>
+                        </span>
+                        <span class = "titulo">Home</span>
+                    </a>
+                </li>
+                <?php } ?>
+
+                <?php 
+                if($_SESSION["user"]['tabela'] == "professor")
                 {?>
                     <li>
                     <a href = "gerenciar-cursos.php">
@@ -95,29 +135,48 @@
                         <span class = "titulo">Gerenciar Cursos</span>
                     </a>
                     </li>
-                <?php }?>
+                <?php } ?>
 
-
+                <?php
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == true)
+                    {?>
+                    <li>
+                        <a href = "cursos.php">
+                            <span class = "icone">
+                                <ion-icon name="library-outline"></ion-icon>
+                            </span>
+                            <span class = "titulo">Cursos</span>
+                        </a>
+                    </li>
+                <?php }}
+                elseif($_SESSION["user"]['tabela'] == "professor")
+                {?>
                 <li>
-                    <a href = "#">
+                    <a href = "cursos.php">
                         <span class = "icone">
                             <ion-icon name="library-outline"></ion-icon>
                         </span>
                         <span class = "titulo">Cursos</span>
                     </a>
-                    </li>
+                </li>
+                <?php } ?>
 
+                <?php 
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
                 <li>
-                    <a href = "#">
+                    <a href = "certificados.php">
                         <span class = "icone">
                             <ion-icon name="trophy-outline"></ion-icon>
                         </span>
                         <span class = "titulo">Certificados</span>
                     </a>
                 </li>
+                <?php } ?>
 
                 <li>
-                    <a href = "editar-perfil">
+                    <a href = "editar-perfil.php">
                         <span class = "icone">
                             <ion-icon name = "settings-outline"></ion-icon>
                         </span>
@@ -133,7 +192,6 @@
                         <span class = "titulo">Sair</span>
                     </a>
                 </li>
-
             </ul>
         </div>
         
@@ -143,14 +201,16 @@
                     <ion-icon name = "menu-outline"></ion-icon>
                 </div>
 
-                <div class = "user">
-                    
-                    <img src = "../img/avaliacao/pic-1.png" alt = "Foto do Usuário">
+                <div class = "user">  
+                    <a href="editar-perfil.php">
+                        <img src="<?php if($_SESSION["user"]['tabela'] == "aluno") { echo $_SESSION['dados_user']['img']; } elseif($_SESSION["user"]['tabela'] == "professor") { echo "../img/icon.png";} ?>" alt="foto de perfil">
+                    </a>
                 </div>
             </div>
             
             
                 <!--ADICIONAAAAAAAAAAAAR AQUII VINICIUUUSSSSSSSSS-->
+
 
             <header>
             <h1>Editar Módulos</h1>
@@ -160,7 +220,7 @@
             <form action="" method="POST" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="titulo_mod" class="form-label">Título</label>
-                    <input type="text" name="titulo_mod" value="<?php echo htmlspecialchars($modulo['id_curso']['titulo_mod']); ?>" class="form-control" required>
+                    <input type="text" name="titulo_mod" value="<?php echo htmlspecialchars($modulo['titulo_mod']); ?>" class="form-control" required>
                 </div>
 
                 <div class="mb-3">
@@ -169,10 +229,10 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="image_mod" class="form-label">Imagem Atual</label>
-                
-                </div>
-
+                        <label for="imagem_mod" class="form-label">Trocar Imagem </label>
+                        <input type="file" name="imagem_mod" class="form-control">
+                    </div>
+            <button type="submit" class = "btn bnt-sucess">Enviar</button>
             </form>
 
                 <!--ADICIONAAAAAAAAAAAAR AQUII VINICIUUUSSSSSSSSS-->

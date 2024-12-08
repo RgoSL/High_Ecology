@@ -1,92 +1,326 @@
 <?php
-include '../php/config.php';
+session_start();
+include('../php/config.php');
 
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
-    $stmt = $pdo->prepare("SELECT * FROM conteudos WHERE id = ?");
-    $stmt->execute([$id]);
-    $conteudo = $stmt->fetch(PDO::FETCH_ASSOC);
+// Verifica se o ID do módulo foi fornecido
+$id = isset($_GET['id']) ? $_GET['id'] : null;
+if ($id === null) {
+    die('ID do conteúdo não fornecido.');
+}
 
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $titulo = $_POST['titulo'];
-        $modulo = $_POST['modulo'];
-        $descricao = $_POST['descricao'];
-        $conteudoText = $_POST['conteudo'];
-        $imagemPath = $conteudo['imagem_c'];
+// Busca o conteúdo existente no banco
+$stmt = $pdo->prepare('SELECT * FROM conteudos WHERE id = ?');
+$stmt->execute([$id]);
+$conteudo = $stmt->fetch();
 
-        if (isset($_FILES['imagem_C']) && $_FILES['imagem_c']['error'] == UPLOAD_ERR_OK) {
-            $nomeImagem = uniqid() . '_' . $_FILES['imagem_c']['name'];
-            $destinoImagem = '../img/uploads/' . $nomeImagem;
-            if (move_uploaded_file($_FILES['imagem_c']['tmp_name'], $destinoImagem)) {
-                $imagemPath = $destinoImagem;
-            }
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $titulo_principal = $_POST['titulo_principal'];
+    $descricao = $_POST['descricao'];
+    $titulo1 = $_POST['titulo1'];
+    $texto1 = $_POST['texto1'];
+    $imagem1 = $conteudo['imagem1'];
+    $titulo2 = $_POST['titulo2'];
+    $texto2 = $_POST['texto2'];
+    $imagem2 = $conteudo['imagem2'];
+    $titulo3 = $_POST['titulo3'];
+    $texto3 = $_POST['texto3'];
+    $imagem3 = $conteudo['imagem3'];
+    $id_modulo = $_SESSION['id_do_modulo'] ?? 0; // Verifica se a variável está definida
+
+    // Upload de imagem 1
+    if (!empty($_FILES['imagem1']['name'])) {
+        $imagem1 = basename($_FILES['imagem1']['name']);
+        $target_dir = "../img/uploads/";
+        $target_file = $target_dir . $imagem1;
+
+        if (move_uploaded_file($_FILES['imagem1']['tmp_name'], $target_file)) {
+            echo "Imagem 1 atualizada com sucesso!";
+        } else {
+            echo "Erro ao enviar a imagem 1!";
         }
-
-        $stmt = $pdo->prepare("UPDATE conteudos SET titulo = ?, modulo = ?, descricao = ?, imagem_C = ?, conteudo = ? WHERE id = ?");
-        $stmt->execute([$titulo, $modulo, $descricao, $imagemPath, $conteudoText, $id]);
-
-        header("Location: gerenciar-conteudo.php");
-        exit();
     }
-} else {
-    header("Location: gerenciar-conteudo.php");
-    exit();
+
+    // Upload de imagem 2
+    if (!empty($_FILES['imagem2']['name'])) {
+        $imagem2 = basename($_FILES['imagem2']['name']);
+        $target_dir = "../img/uploads/";
+        $target_file = $target_dir . $imagem2;
+
+        if (move_uploaded_file($_FILES['imagem2']['tmp_name'], $target_file)) {
+            echo "Imagem 2 atualizada com sucesso!";
+        } else {
+            echo "Erro ao enviar a imagem 2!";
+        }
+    }
+
+    // Upload de imagem 3
+    if (!empty($_FILES['imagem3']['name'])) {
+        $imagem3 = basename($_FILES['imagem3']['name']);
+        $target_dir = "../img/uploads/";
+        $target_file = $target_dir . $imagem3;
+
+        if (move_uploaded_file($_FILES['imagem3']['tmp_name'], $target_file)) {
+            echo "Imagem 3 atualizada com sucesso!";
+        } else {
+            echo "Erro ao enviar a imagem 3!";
+        }
+    }
+
+    // Atualiza o banco de dados
+    $stmt = $pdo->prepare('UPDATE conteudos SET id_modulo = ?, titulo_principal = ?, descricao = ?, titulo1 = ?, texto1 = ?, imagem1 = ?, titulo2 = ?, texto2 = ?, imagem2 = ?, titulo3 = ?, texto3 = ?, imagem3 = ? WHERE id = ?');
+    $stmt->execute([$id_modulo, $titulo_principal, $descricao, $titulo1, $texto1, $imagem1, $titulo2, $texto2, $imagem2, $titulo3, $texto3, $imagem3, $id]);
+
+    // Redireciona para a página de gerenciamento
+    header('Location: gerenciar-conteudo.php');
 }
 ?>
 
+
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
-    <title>Editar Conteúdo</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.bundle.min.js">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js">
+    <link rel="stylesheet" href="../css/all.css">
+
+    <link rel="stylesheet" href="../css/all.css">
+    <link rel="stylesheet" href="../css/forms.css">
+
+    <link rel="stylesheet" href="../css/conteudo-main-logado.css">
+    <?php if ($_SESSION["user"]['tabela'] == "professor") { ?>
+        <link rel="stylesheet" href="../css/leftnavbarprofessor.css">
+        <link rel="stylesheet" href="../css/topbarprofessor.css">
+    <?php } else if ($_SESSION["user"]['tabela'] == "aluno") { ?>
+            <link rel="stylesheet" href="../css/leftnavbar.css">
+            <link rel="stylesheet" href="../css/topbar.css">
+    <?php } ?>
+    <link rel="stylesheet" href="../css/editar-perfil.css">
+
+    <script src="../js/perfil.js" defer></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/gerenciar-cursos.css">
+
+    <title>Editar Perfil - High Ecology</title>
 </head>
+
 <body>
-    <div class="container mt-5">
-        <h1>Editar Conteúdo</h1>
-        <form method="post" action="" enctype="multipart/form-data">
-            <label>Título:</label>
-            <input type="text" name="titulo" value="<?= $conteudo['titulo'] ?>" class="form-control" required>
+    <div class="container-p">
+        <div class="navegacao">
+            <ul style="padding: 0px 0px 0px 0px; margin: 0px 0px 0px 0px;">
+            <li>
+                    <a href = "#">
+                        <span class = "icone">
+                            <img src="" alt="">
+                        </span>
+                        <span class = "titulo">HIGH ECOLOGY</span>
+                    </a>
+                </li>
 
-            <label>Módulo:</label>
-            <input type="text" name="modulo" value="<?= $conteudo['modulo'] ?>" class="form-control" required>
+                <?php 
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == false)
+                    {?>
+                    <li>
+                        <a href = "renovarAssinatura.php">
+                            <span class = "icone">
+                                <ion-icon name="repeat-outline"></ion-icon>
+                            </span>
+                            <span class = "titulo">Renovar Assinatura</span>
+                        </a>
+                    </li>
+                <?php } }?>
 
-            <label>Descrição:</label>
-            <textarea name="descricao" class="form-control" required><?= $conteudo['descricao'] ?></textarea>
+                <?php 
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
 
-            <!-- Drop File para Imagem com Visualização -->
-            <label>Imagem Atual:</label><br>
-            <img src="<?= $conteudo['imagem_c'] ?>" alt="Imagem Atual" style="max-width: 200px; margin-bottom: 10px;"><br>
-            <label>Trocar Imagem:</label>
-            <div class="drop-zone" id="drop-zone">
-                Arraste e solte uma nova imagem ou clique para escolher
-                <input type="file" name="imagem_c" id="imagem_c" accept="image/*" hidden>
+                <li>
+                    <a href = "perfil.php">
+                        <span class = "icone">
+                            <ion-icon name = "home-outline"></ion-icon>
+                        </span>
+                        <span class = "titulo">Home</span>
+                    </a>
+                </li>
+                <?php } ?>
+
+                <?php 
+                if($_SESSION["user"]['tabela'] == "professor")
+                {?>
+                    <li>
+                    <a href = "gerenciar-cursos.php">
+                        <span class = "icone">
+                            <ion-icon name="pencil-outline"></ion-icon>
+                        </span>
+                        <span class = "titulo">Gerenciar Cursos</span>
+                    </a>
+                    </li>
+                <?php } ?>
+
+                <?php
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == true)
+                    {?>
+                    <li>
+                        <a href = "cursos.php">
+                            <span class = "icone">
+                                <ion-icon name="library-outline"></ion-icon>
+                            </span>
+                            <span class = "titulo">Cursos</span>
+                        </a>
+                    </li>
+                <?php }}
+                elseif($_SESSION["user"]['tabela'] == "professor")
+                {?>
+                <li>
+                    <a href = "cursos.php">
+                        <span class = "icone">
+                            <ion-icon name="library-outline"></ion-icon>
+                        </span>
+                        <span class = "titulo">Cursos</span>
+                    </a>
+                </li>
+                <?php } ?>
+
+                <?php 
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
+                <li>
+                    <a href = "certificados.php">
+                        <span class = "icone">
+                            <ion-icon name="trophy-outline"></ion-icon>
+                        </span>
+                        <span class = "titulo">Certificados</span>
+                    </a>
+                </li>
+                <?php } ?>
+
+                <li>
+                    <a href = "editar-perfil.php">
+                        <span class = "icone">
+                            <ion-icon name = "settings-outline"></ion-icon>
+                        </span>
+                        <span class = "titulo">Editar Perfil</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href = "../php/logout.php">
+                        <span class = "icone">
+                            <ion-icon name = "log-out-outline"></ion-icon>
+                        </span>
+                        <span class = "titulo">Sair</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="main-p">
+            <div class="topbar">
+                <div class="toggle">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </div>
+
+                <div class="user">
+                    <a href="editar-perfil.php">
+                        <img src="<?php if ($_SESSION["user"]['tabela'] == "aluno") {
+                            echo $_SESSION['dados_user']['img'];
+                        } elseif ($_SESSION["user"]['tabela'] == "professor") {
+                            echo "../img/icon.png";
+                        } ?>" alt="foto de perfil">
+                    </a>
+                </div>
             </div>
 
-            <label>Conteúdo:</label>
-            <textarea name="conteudo" class="form-control" required><?= $conteudo['conteudo'] ?></textarea>
 
-            <button type="submit" class="btn btn-primary mt-3">Salvar</button>
-        </form>
-    </div>
+            <!--ADICIONAAAAAAAAAAAAR AQUII VINICIUUUSSSSSSSSS-->
 
-    <script>
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('imagem_c');
+            <header>
+                <h1>Editar Conteúdos</h1>
+            </header>
 
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => e.preventDefault());
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            fileInput.files = e.dataTransfer.files;
-            dropZone.innerText = fileInput.files[0].name;
-        });
+            <div class="container">
+                <form action="" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="titulo_principal" class="form-label">Título_principal</label>
+                        <input type="text" name="titulo_principal"
+                            value="<?php echo htmlspecialchars($conteudo['titulo_principal']); ?>" class="form-control"
+                            required>
+                    </div>
 
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length) {
-                dropZone.innerText = fileInput.files[0].name;
-            }
-        });
-    </script>
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <textarea name="descricao" class="form-control" rows="4"
+                            required><?php echo htmlspecialchars($conteudo['descricao']); ?></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="titulo1" class="form-label">Primeiro título</label>
+                        <input type="text" name="titulo1" value="<?php echo htmlspecialchars($conteudo['titulo1']); ?>"
+                            class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="texto1" class="form-label">Primeiro texto</label>
+                        <textarea name="texto1" class="form-control" rows="4"
+                            required><?php echo htmlspecialchars($conteudo['texto1']); ?></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="imagem1" class="form-label">Trocar Imagem 1</label>
+                        <input type="file" name="imagem1" class="form-control">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="titulo2" class="form-label">Segundo título</label>
+                        <input type="text" name="titulo2" value="<?php echo htmlspecialchars($conteudo['titulo2']); ?>"
+                            class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="texto2" class="form-label">Segundo texto</label>
+                        <textarea name="texto2" class="form-control" rows="4"
+                            required><?php echo htmlspecialchars($conteudo['texto2']); ?></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="imagem2" class="form-label">Trocar Imagem 2</label>
+                        <input type="file" name="imagem2" class="form-control">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="titulo3" class="form-label">Terceiro título</label>
+                        <input type="text" name="titulo3" value="<?php echo htmlspecialchars($conteudo['titulo3']); ?>"
+                            class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="texto3" class="form-label">Terceiro texto</label>
+                        <textarea name="texto3" class="form-control" rows="4"
+                            required><?php echo htmlspecialchars($conteudo['texto3']); ?></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="imagem3" class="form-label">Trocar Imagem 3</label>
+                        <input type="file" name="imagem3" class="form-control">
+                    </div>
+
+                    <button type="submit" class="bnt bnt-sucess">Enviar</button>
+
+                </form>
+
+                <!--ADICIONAAAAAAAAAAAAR AQUII VINICIUUUSSSSSSSSS-->
+
+
+            </div>
 </body>
+
 </html>

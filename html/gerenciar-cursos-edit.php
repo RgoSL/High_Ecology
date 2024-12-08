@@ -1,6 +1,8 @@
 <?php
     session_start();
             include('../php/config.php');
+            
+            $id_mod = isset($_GET['id_mod']) ? $_GET['id_mod'] : null;
 
             $id = $_GET['id'];
             $stmt = $pdo->prepare('SELECT * FROM cursos WHERE id = ?');
@@ -18,9 +20,10 @@
                     $target_file = $target_dir . basename($_FILES['image']['name']);
                     move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
                 }
-
+              
                 $stmt = $pdo->prepare('UPDATE cursos SET title = ?, description = ?, image = ? WHERE id = ?');
                 $stmt->execute([$title, $description, $image, $id]);
+               
 
                 header('Location: gerenciar-cursos.php'); 
             }
@@ -37,7 +40,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.bundle.min.js">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js">
     <link rel="stylesheet" href="../css/all.css">
-
+    <link rel="stylesheet" href="../css/forms.css">
     <link rel="stylesheet" href="../css/all.css">
     <link rel="stylesheet" href="../css/conteudo-main-logado.css">
     <?php  if($_SESSION["user"]['tabela'] == "professor") {?>
@@ -46,6 +49,7 @@
     <?php } else if($_SESSION["user"]['tabela'] == "aluno") {?>
         <link rel="stylesheet" href="../css/leftnavbar.css">
         <link rel="stylesheet" href="../css/topbar.css">
+        
     <?php } ?>
     <link rel="stylesheet" href="../css/editar-perfil.css">
 
@@ -62,7 +66,7 @@
     <div class = "container-p">
         <div class = "navegacao">
             <ul style="padding: 0px 0px 0px 0px; margin: 0px 0px 0px 0px;">
-                <li>
+            <li>
                     <a href = "#">
                         <span class = "icone">
                             <img src="" alt="">
@@ -72,20 +76,35 @@
                 </li>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "aluno")
-                {?>
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == false)
+                    {?>
                     <li>
-                        <a href = "perfil.php">
+                        <a href = "renovarAssinatura.php">
                             <span class = "icone">
-                                <ion-icon name = "home-outline"></ion-icon>
+                                <ion-icon name="repeat-outline"></ion-icon>
                             </span>
-                            <span class = "titulo">Home</span>
+                            <span class = "titulo">Renovar Assinatura</span>
                         </a>
                     </li>
-                <?php }?>
+                <?php } }?>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "professor") // ALGUM ERRO NA VARIAVEL , VERIFICAAAAAAAAAAAAAAAR
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
+
+                <li>
+                    <a href = "perfil.php">
+                        <span class = "icone">
+                            <ion-icon name = "home-outline"></ion-icon>
+                        </span>
+                        <span class = "titulo">Home</span>
+                    </a>
+                </li>
+                <?php } ?>
+
+                <?php 
+                if($_SESSION["user"]['tabela'] == "professor")
                 {?>
                     <li>
                     <a href = "gerenciar-cursos.php">
@@ -95,9 +114,23 @@
                         <span class = "titulo">Gerenciar Cursos</span>
                     </a>
                     </li>
-                <?php }?>
+                <?php } ?>
 
-
+                <?php
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == true)
+                    {?>
+                    <li>
+                        <a href = "cursos.php">
+                            <span class = "icone">
+                                <ion-icon name="library-outline"></ion-icon>
+                            </span>
+                            <span class = "titulo">Cursos</span>
+                        </a>
+                    </li>
+                <?php }}
+                elseif($_SESSION["user"]['tabela'] == "professor")
+                {?>
                 <li>
                     <a href = "cursos.php">
                         <span class = "icone">
@@ -105,19 +138,24 @@
                         </span>
                         <span class = "titulo">Cursos</span>
                     </a>
-                    </li>
+                </li>
+                <?php } ?>
 
+                <?php 
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
                 <li>
-                    <a href = "#">
+                    <a href = "certificados.php">
                         <span class = "icone">
                             <ion-icon name="trophy-outline"></ion-icon>
                         </span>
                         <span class = "titulo">Certificados</span>
                     </a>
                 </li>
+                <?php } ?>
 
                 <li>
-                    <a href = "editar-perfil">
+                    <a href = "editar-perfil.php">
                         <span class = "icone">
                             <ion-icon name = "settings-outline"></ion-icon>
                         </span>
@@ -133,7 +171,6 @@
                         <span class = "titulo">Sair</span>
                     </a>
                 </li>
-
             </ul>
         </div>
         
@@ -144,8 +181,9 @@
                 </div>
 
                 <div class = "user">
-                    
-                    <img src = "../img/avaliacao/pic-1.png" alt = "Foto do Usuário">
+                    <a href="editar-perfil.php">
+                        <img src="<?php if($_SESSION["user"]['tabela'] == "aluno") { echo $_SESSION['dados_user']['img']; } elseif($_SESSION["user"]['tabela'] == "professor") { echo "../img/icon.png";} ?>" alt="foto de perfil">
+                    </a>
                 </div>
             </div>
             
@@ -155,6 +193,7 @@
             <header>
             <h1>Editar Curso</h1>
             </header>
+            
 
             <div class="container">
             <form action="" method="POST" enctype="multipart/form-data">
@@ -169,9 +208,10 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="image" class="form-label">Imagem Atual</label>
-                
-                </div>
+                        <label for="image" class="form-label">Trocar Imagem </label>
+                        <input type="file" name="image" class="form-control">
+                    </div>
+            <button type="submit" class = "btn bnt-sucess">Enviar</button>
 
             </form>
 

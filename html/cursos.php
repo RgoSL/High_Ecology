@@ -2,11 +2,23 @@
 session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['btn_curso_comecar'])) {
+        include_once '../php/metodos_principais.php';
+        $metodos_principais = new metodos_principais();
+
+        $metodos_principais->preencherProgresso($_SESSION["user"]['id'], $_SESSION["id_do_curso"]); //passar parametros
+
+    }
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $input_hidden = $_POST['txt_nome_do_curso'];
     $_SESSION['nome_do_curso'] = $input_hidden;
     header("Location: modulos2.php");
     exit();
 }
+
+
 
 ?>
 
@@ -37,7 +49,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <script nomodule src = "https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/gerenciar-cursos.css">
 
     <title>Editar Perfil - High Ecology</title>
 </head>
@@ -45,7 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class = "container-p">
         <div class = "navegacao">
             <ul style="padding: 0px 0px 0px 0px; margin: 0px 0px 0px 0px;">
-                <li>
+            <li>
                     <a href = "#">
                         <span class = "icone">
                             <img src="" alt="">
@@ -55,20 +66,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </li>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "aluno")
-                {?>
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == false)
+                    {?>
                     <li>
-                        <a href = "perfil.php">
+                        <a href = "renovarAssinatura.php">
                             <span class = "icone">
-                                <ion-icon name = "home-outline"></ion-icon>
+                                <ion-icon name="repeat-outline"></ion-icon>
                             </span>
-                            <span class = "titulo">Home</span>
+                            <span class = "titulo">Renovar Assinatura</span>
                         </a>
                     </li>
-                <?php }?>
+                <?php } }?>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "professor") // ALGUM ERRO NA VARIAVEL , VERIFICAAAAAAAAAAAAAAAR
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
+
+                <li>
+                    <a href = "perfil.php">
+                        <span class = "icone">
+                            <ion-icon name = "home-outline"></ion-icon>
+                        </span>
+                        <span class = "titulo">Home</span>
+                    </a>
+                </li>
+                <?php } ?>
+
+                <?php 
+                if($_SESSION["user"]['tabela'] == "professor")
                 {?>
                     <li>
                     <a href = "gerenciar-cursos.php">
@@ -78,9 +104,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <span class = "titulo">Gerenciar Cursos</span>
                     </a>
                     </li>
-                <?php }?>
+                <?php } ?>
 
-
+                <?php
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == true)
+                    {?>
+                    <li>
+                        <a href = "cursos.php">
+                            <span class = "icone">
+                                <ion-icon name="library-outline"></ion-icon>
+                            </span>
+                            <span class = "titulo">Cursos</span>
+                        </a>
+                    </li>
+                <?php }}
+                elseif($_SESSION["user"]['tabela'] == "professor")
+                {?>
                 <li>
                     <a href = "cursos.php">
                         <span class = "icone">
@@ -88,16 +128,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </span>
                         <span class = "titulo">Cursos</span>
                     </a>
-                    </li>
+                </li>
+                <?php } ?>
 
+                <?php 
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
                 <li>
-                    <a href = "#">
+                    <a href = "certificados.php">
                         <span class = "icone">
                             <ion-icon name="trophy-outline"></ion-icon>
                         </span>
                         <span class = "titulo">Certificados</span>
                     </a>
                 </li>
+                <?php } ?>
 
                 <li>
                     <a href = "editar-perfil.php">
@@ -116,7 +161,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <span class = "titulo">Sair</span>
                     </a>
                 </li>
-
             </ul>
         </div>
         
@@ -127,60 +171,78 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
 
                 <div class = "user">
-                    
-                    <img src = "../img/avaliacao/pic-1.png" alt = "Foto do Usuário">
+                    <a href="editar-perfil.php">
+                        <img src="<?php if($_SESSION["user"]['tabela'] == "aluno") { echo $_SESSION['dados_user']['img']; } elseif($_SESSION["user"]['tabela'] == "professor") { echo "../img/icon.png";} ?>" alt="foto de perfil">
+                    </a>
                 </div>
             </div>
             
             
                 <!--ADICIONAAAAAAAAAAAAR AQUII VINICIUUUSSSSSSSSS-->
 
-            <?php
-            include('../php/config.php');
+                <?php
+                    include('../php/config.php');
 
-            $stmt = $pdo->query('SELECT * FROM cursos');
-            $courses = $stmt->fetchAll();
-            ?>
+                    // Obter o ID do aluno da sessão
+                    $codAluno = $_SESSION['user']['id'];
 
-            <div class="container">
-            <form action="#" method="POST">
-               <div class="card__container">
-               <?php foreach ($courses as $course): ?>
-                  <article class="card__article">
-                     <img src="../img/uploads/<?php echo htmlspecialchars($course['image']); ?>" alt="image" class="card__img">
+                    // Buscar todos os cursos
+                    $sqlCursos = 'SELECT * FROM cursos';
+                    $stmtCursos = $pdo->query($sqlCursos);
+                    $courses = $stmtCursos->fetchAll(PDO::FETCH_ASSOC);
 
-                     <div class="card__data">
-                        <span class="card__description"><?php echo htmlspecialchars($course['description']); ?></span>
-                        <h2 class="card__title"><?php echo htmlspecialchars($course['title']); ?></h2>
-                        <a type="button" class="card__button">Começar</a>
-                     </div>
-                  </article>
-                  <?php endforeach; ?>
+                    // Buscar progresso do aluno com status "visualizado"
+                    $sqlProgresso = 'SELECT id_curso FROM progresso WHERE Cod_Aluno = :codAluno AND status = "visualizado"';
+                    $stmtProgresso = $pdo->prepare($sqlProgresso);
+                    $stmtProgresso->execute(['codAluno' => $codAluno]);
+                    $visualizados = $stmtProgresso->fetchAll(PDO::FETCH_COLUMN); // Apenas IDs de cursos
 
-                  <input type="hidden" name="txt_nome_do_curso" class="txt_nome_do_curso" value="">
-               </div>
-            </div>
-            </form>
-         </div>
+                    // Criar um array para verificar quais cursos estão visualizados
+                    $visualizadosMap = array_flip($visualizados);
+                ?>
+
+                <div class="container">
+                    <form action="#" method="POST">
+                        <div class="card__container">
+                            <?php foreach ($courses as $course): ?>
+                                <article class="card__article">
+                                    <?php if (isset($visualizadosMap[$course['id']])): ?>
+                                        <img src="../img/eye.webp" alt="Visualizado" class="eye-icon">
+                                    <?php endif; ?>
+
+                                    <img src="../img/uploads/<?php echo htmlspecialchars($course['image']); ?>" alt="image" class="cardimg">
+
+                                    <div class="card__data">
+                                        <span class="card__description"><?php echo htmlspecialchars($course['description']); ?></span>
+                                        <h2 class="card__title"><?php echo htmlspecialchars($course['title']); ?></h2>
+                                        <button type="submit" class="card__button" name="btn_curso_comecar" style="border:none">Iniciar curso</button>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+
+                            <input type="hidden" name="txt_nome_do_curso" class="txt_nome_do_curso" value="">
+                        </div>
+                    </form>
+                </div>
 
          <script>
-        // Seleciona todos os botões de módulo
-        let btn_modulos = document.querySelectorAll(".card__button");
-        let input_hidden_nome_curso = document.querySelector('.txt_nome_do_curso');
+            // Seleciona todos os botões de módulo
+            let btn_modulos = document.querySelectorAll(".card__button");
+            let input_hidden_nome_curso = document.querySelector('.txt_nome_do_curso');
 
-        // Itera sobre cada botão e adiciona um evento de clique
-        btn_modulos.forEach((btn) => {
-            btn.addEventListener('click', () => {
-                // Localiza o título do curso no mesmo cartão do botão clicado
-                let nome_curso = btn.closest('.card__data').querySelector('.card__title').textContent;
-                
-                // Define o valor do curso no input oculto
-                input_hidden_nome_curso.value = nome_curso;
-                
-                // Envia o formulário
-                btn.closest('form').submit();
+            // Itera sobre cada botão e adiciona um evento de clique
+            btn_modulos.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    // Localiza o título do curso no mesmo cartão do botão clicado
+                    let nome_curso = btn.closest('.card__data').querySelector('.card__title').textContent;
+                    
+                    // Define o valor do curso no input oculto
+                    input_hidden_nome_curso.value = nome_curso;
+                    
+                    // Envia o formulário
+                    btn.closest('form').submit();
+                });
             });
-        });
-    </script>
+        </script>
 </body>
 </html>

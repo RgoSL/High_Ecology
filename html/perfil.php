@@ -1,5 +1,7 @@
 <?php
 session_start();
+
+
 ?>
 
 <!DOCTYPE html>
@@ -7,7 +9,7 @@ session_start();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Perfil</title>
+    <title>Meu Perfil - High Ecology</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.bundle.min.js">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js">
@@ -24,14 +26,17 @@ session_start();
     <?php } ?>
 
     <link rel="stylesheet" href="../css/perfil.css">
+    <link rel="stylesheet" href="../css/mensagembemvindo.css">
     <script src="../js/perfil.js" defer></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 <body>
 
     <div class = "container-p">
         <div class = "navegacao">
             <ul>
-                <li>
+            <li>
                     <a href = "#">
                         <span class = "icone">
                             <img src="" alt="">
@@ -41,11 +46,25 @@ session_start();
                 </li>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "aluno") // ALGUM ERRO NA VARIAVEL , VERIFICAAAAAAAAAAAAAAAR
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == false)
+                    {?>
+                    <li>
+                        <a href = "renovarAssinatura.php">
+                            <span class = "icone">
+                                <ion-icon name="repeat-outline"></ion-icon>
+                            </span>
+                            <span class = "titulo">Renovar Assinatura</span>
+                        </a>
+                    </li>
+                <?php } }?>
+
+                <?php 
+                if($_SESSION["user"]['tabela'] == "aluno")
                 {?>
 
                 <li>
-                    <a href = "#">
+                    <a href = "perfil.php">
                         <span class = "icone">
                             <ion-icon name = "home-outline"></ion-icon>
                         </span>
@@ -55,7 +74,7 @@ session_start();
                 <?php } ?>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "professor") // ALGUM ERRO NA VARIAVEL , VERIFICAAAAAAAAAAAAAAAR
+                if($_SESSION["user"]['tabela'] == "professor")
                 {?>
                     <li>
                     <a href = "gerenciar-cursos.php">
@@ -67,7 +86,21 @@ session_start();
                     </li>
                 <?php } ?>
 
-
+                <?php
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == true)
+                    {?>
+                    <li>
+                        <a href = "cursos.php">
+                            <span class = "icone">
+                                <ion-icon name="library-outline"></ion-icon>
+                            </span>
+                            <span class = "titulo">Cursos</span>
+                        </a>
+                    </li>
+                <?php }}
+                elseif($_SESSION["user"]['tabela'] == "professor")
+                {?>
                 <li>
                     <a href = "cursos.php">
                         <span class = "icone">
@@ -75,16 +108,21 @@ session_start();
                         </span>
                         <span class = "titulo">Cursos</span>
                     </a>
-                    </li>
+                </li>
+                <?php } ?>
 
+                <?php 
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
                 <li>
-                    <a href = "#">
+                    <a href = "certificados.php">
                         <span class = "icone">
                             <ion-icon name="trophy-outline"></ion-icon>
                         </span>
                         <span class = "titulo">Certificados</span>
                     </a>
                 </li>
+                <?php } ?>
 
                 <li>
                     <a href = "editar-perfil.php">
@@ -103,7 +141,6 @@ session_start();
                         <span class = "titulo">Sair</span>
                     </a>
                 </li>
-
             </ul>
         </div>
         
@@ -114,8 +151,9 @@ session_start();
                 </div>
 
                 <div class = "user">
-                    
-                    <img src = "../img/avaliacao/pic-1.png" alt = "Foto do Usuário">
+                    <a href="editar-perfil.php">
+                        <img src="<?php if($_SESSION["user"]['tabela'] == "aluno") { echo $_SESSION['dados_user']['img']; } elseif($_SESSION["user"]['tabela'] == "professor") { echo "../img/icon.png";} ?>" alt="foto de perfil">
+                    </a>
                 </div>
             </div>
 
@@ -135,96 +173,91 @@ session_start();
 
 
             <div class = "cardGrupo">
-                <div class = "cards">
-                    <div>
-                        <div class = "numeros">12 Dias</div>
-                        <div class = "nomeCard">Estudos Consecutivos</div>
-                    </div>
-                    <div class = "iconeGp">
-                        <ion-icon name="barbell-outline"></ion-icon>
-                    </div>
-                </div>
             
                 <div class = "cards">
                     <div>
-                        <div class = "numeros">9</div>
+                        <div class = "numeros">0</div>
                         <div class = "nomeCard">Badges</div>
                     </div>
                     <div class = "iconeGp">
                         <ion-icon name="trophy-outline"></ion-icon>
                     </div>
                 </div>
-            
+                <a href="cursos.php" style="text-decoration:none">
                 <div class = "cards">
                     <div>
-                        <div class = "numeros">2</div>
-                        <div class = "nomeCard">Em Aberto</div>
+                        <div class = "numeros">
+                            <?php                 
+                                include_once '../php/metodos_principais.php';
+                                $metodos_principais = new metodos_principais();
+
+                                $result = $metodos_principais->cursosIniciado($_SESSION["user"]['id']);
+
+                                echo $result;
+                                
+                            ?>
+                        </div>
+                        <div class = "nomeCard">Cursos iniciados</div>
                     </div>
                     <div class = "iconeGp">
                         <ion-icon name="book-outline"></ion-icon>
                     </div>
                 </div>
+                </a>
             
+                <?php
+include('../php/config.php');
 
-                <div class="page-content page-container" id="page-content">
-                    <div class="padding">
-                        <div class="row container d-flex">
+// Recupera as assinaturas do aluno
+$stmt = $pdo->query('SELECT * FROM assinaturas WHERE Cod_Aluno = ' . $_SESSION['dados_user']['cod_aluno']);
+$assinaturas = $stmt->fetchAll(PDO::FETCH_ASSOC); // Pega todas as linhas como um array associativo
+?>
 
-                              <div class="card">
-                                <div class="card-body">
-                                  <h4 class="card-title">Histórico</h4>
-                                  <p class="card-description">
-                                    Pagamentos realizados no ano
-                                  </p>
-                                  <div class="table-responsive">
-                                    <table class="table">
-                                      <thead>
+<div class="page-content page-container" id="page-content">
+    <div class="padding">
+        <div class="row container d-flex">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Histórico</h4>
+                    <p class="card-description">
+                        Pagamentos realizados no ano
+                    </p>
+                    <div class="table-responsive">
+                        <?php if ($assinaturas): ?>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Plano</th>
+                                        <th>Valor</th>
+                                        <th>Pagamento</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($assinaturas as $assinatura): 
+                                        // Recupera o valor do plano correspondente
+                                        $stmt = $pdo->query('SELECT Valor FROM planos WHERE Tipo = "' . $assinatura['Plano'] . '"');
+                                        $valorPlano = $stmt->fetch(PDO::FETCH_ASSOC); // Pega apenas uma linha
+                                    ?>
                                         <tr>
-                                          <th>Data</th>
-                                          <th>Valor</th>
-                                          <th>Vencimento</th>
-                                          <th>Status</th>
+                                            <td><?php echo htmlspecialchars($assinatura['Data_Assinatura']); ?></td>
+                                            <td><?php echo htmlspecialchars($assinatura['Plano']); ?></td>
+                                            <td><?php echo htmlspecialchars($valorPlano['Valor'] ?? 'N/A'); ?></td>
+                                            <td><label class="badge badge-warning"><?php echo htmlspecialchars($assinatura['Forma_Pagamento']); ?></label></td>
                                         </tr>
-                                      </thead>
-                                      <tbody>
-                                        <tr>
-                                          <td>25/10</td>
-                                          <td>R$ 59,99</td>
-                                          <td>18 Jun 2024</td>
-                                          <td><label class="badge badge-warning">Pendente</label></td>
-                                        </tr>
-                                        <tr>
-                                           <td>17/09</td>
-                                           <td>R$ 49,99</td>
-                                           <td>18 Jun 2024</td>
-                                          <td><label class="badge badge-danger">Cancelado</label></td>
-                                        </tr>
-                                        <tr>
-                                            <td>02/08</td>
-                                            <td>R$ 49,99</td>
-                                            <td>18 Jun 2024</td>
-                                          <td><label class="badge badge-success">Pago</label></td>
-                                        </tr>
-                                        <tr>
-                                            <td>07/07</td>
-                                            <td>R$ 49,99</td>
-                                            <td>18 Jun 2024</td>
-                                          <td><label class="badge badge-success">Pago</label></td>
-                                        </tr>
-                                        <tr>
-                                            <td>04/06</td>
-                                            <td>R$ 49,99</td>
-                                          <td>18 Jun 2024</td>
-                                          <td><label class="badge badge-success">Pago</label></td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </div>
-                              </div>
-                        </div>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php else: ?>
+                            <p>Nenhuma assinatura encontrada.</p>
+                        <?php endif; ?>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
    
                 </div>
         </div>
@@ -247,5 +280,4 @@ session_start();
       </script>
 </body>
 </html>
-
 

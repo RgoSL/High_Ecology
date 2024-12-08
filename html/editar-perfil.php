@@ -34,8 +34,8 @@ session_start();
 <body>
     <div class = "container-p">
         <div class = "navegacao">
-            <ul>
-                <li>
+        <ul>
+        <li>
                     <a href = "#">
                         <span class = "icone">
                             <img src="" alt="">
@@ -45,20 +45,35 @@ session_start();
                 </li>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "aluno")
-                {?>
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == false)
+                    {?>
                     <li>
-                        <a href = "perfil.php">
+                        <a href = "renovarAssinatura.php">
                             <span class = "icone">
-                                <ion-icon name = "home-outline"></ion-icon>
+                                <ion-icon name="repeat-outline"></ion-icon>
                             </span>
-                            <span class = "titulo">Home</span>
+                            <span class = "titulo">Renovar Assinatura</span>
                         </a>
                     </li>
-                <?php }?>
+                <?php } }?>
 
                 <?php 
-                if($_SESSION["user"]['tabela'] == "professor") // ALGUM ERRO NA VARIAVEL , VERIFICAAAAAAAAAAAAAAAR
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
+
+                <li>
+                    <a href = "perfil.php">
+                        <span class = "icone">
+                            <ion-icon name = "home-outline"></ion-icon>
+                        </span>
+                        <span class = "titulo">Home</span>
+                    </a>
+                </li>
+                <?php } ?>
+
+                <?php 
+                if($_SESSION["user"]['tabela'] == "professor")
                 {?>
                     <li>
                     <a href = "gerenciar-cursos.php">
@@ -70,7 +85,21 @@ session_start();
                     </li>
                 <?php } ?>
 
-
+                <?php
+                if($_SESSION["user"]['tabela'] == "aluno"){
+                    if($_SESSION['dados_user']['matriculado'] == true)
+                    {?>
+                    <li>
+                        <a href = "cursos.php">
+                            <span class = "icone">
+                                <ion-icon name="library-outline"></ion-icon>
+                            </span>
+                            <span class = "titulo">Cursos</span>
+                        </a>
+                    </li>
+                <?php }}
+                elseif($_SESSION["user"]['tabela'] == "professor")
+                {?>
                 <li>
                     <a href = "cursos.php">
                         <span class = "icone">
@@ -78,19 +107,24 @@ session_start();
                         </span>
                         <span class = "titulo">Cursos</span>
                     </a>
-                    </li>
+                </li>
+                <?php } ?>
 
+                <?php 
+                if($_SESSION["user"]['tabela'] == "aluno")
+                {?>
                 <li>
-                    <a href = "#">
+                    <a href = "certificados.php">
                         <span class = "icone">
                             <ion-icon name="trophy-outline"></ion-icon>
                         </span>
                         <span class = "titulo">Certificados</span>
                     </a>
                 </li>
+                <?php } ?>
 
                 <li>
-                    <a href = "#">
+                    <a href = "editar-perfil.php">
                         <span class = "icone">
                             <ion-icon name = "settings-outline"></ion-icon>
                         </span>
@@ -106,7 +140,6 @@ session_start();
                         <span class = "titulo">Sair</span>
                     </a>
                 </li>
-
             </ul>
         </div>
         
@@ -117,8 +150,9 @@ session_start();
                 </div>
 
                 <div class = "user">
-                    
-                    <img src = "../img/avaliacao/pic-1.png" alt = "Foto do Usuário">
+                    <a href="editar-perfil.php">
+                        <img src="<?php if($_SESSION["user"]['tabela'] == "aluno") { echo $_SESSION['dados_user']['img']; } elseif($_SESSION["user"]['tabela'] == "professor") { echo "../img/icon.png";} ?>" alt="foto de perfil">
+                    </a>
                 </div>
             </div>
             
@@ -131,7 +165,7 @@ session_start();
                         <div class="col" id="perfil-imagem">
                             
                             <div class="imagem">
-                                <img src="<?php echo $_SESSION['dados_user']['img'];?>" alt="">
+                                <img src="<?php if($_SESSION["user"]['tabela'] == "aluno") { echo $_SESSION['dados_user']['img']; } elseif($_SESSION["user"]['tabela'] == "professor") { echo "../img/icon.png";} ?>" alt="foto de perfil">
                             </div>
 
                         </div>
@@ -142,8 +176,14 @@ session_start();
                                 <input type="text" id="name" name="name" placeholder="Nome" required value="<?php echo $_SESSION['dados_user']['nome'];?>">
                             </div>
                             <div class="inputBox-editar-perfil">
-                                <span>Alterar Email:</span>
-                                <input type="email" id="email" name="email" placeholder="Email" required value="<?php echo $_SESSION['dados_user']['email'];?>">
+                                <span>
+                                    <?php if($_SESSION["user"]['tabela'] == "professor") { ?>
+                                    Email:
+                                    <?php } else {?>
+                                    Alterar Email:
+                                    <?php } ?>
+                                </span>
+                                <input type="email" id="email" name="email" placeholder="Email" required value="<?php echo $_SESSION['dados_user']['email'];?>" <?php if($_SESSION["user"]['tabela'] == "professor") echo "readonly style='background-color:#5a8854; color:#f2f2f2;'"; ?>>
                             </div>
                             <?php
                             if($_SESSION["user"]['tabela'] == "aluno")
@@ -155,7 +195,7 @@ session_start();
                             <?php } ?>
                             <div class="inputBox-editar-perfil">
                                 <span>Alterar senha:</span>
-                                <input type="password" name="password"placeholder="Senha" required value="<?php echo $_SESSION['dados_user']['senha'];?>">>
+                                <input type="password" name="password"placeholder="Senha" required value="<?php echo $_SESSION['dados_user']['senha'];?>">
                             </div>
                         </div>
                     </div>
@@ -180,8 +220,13 @@ session_start();
                             
                             // Caso a atualização seja bem-sucedida, atualiza os dados na sessão
                             if ($resultado) {
-                                $_SESSION['dados_user'] = $metodos_principais->getAlunoPorId($_SESSION["user"]['id']);  // ou getProfessorPorId(), dependendo do tipo de usuário
-
+                                if ($_SESSION["user"]['tabela'] == "aluno"){
+                                    $_SESSION['dados_user']= $metodos_principais->getAlunoPorId($_SESSION["user"]['id']);  // ou getProfessorPorId(), dependendo do tipo de usuário
+                                }
+                                else if ($_SESSION["user"]['tabela'] == "professor"){
+                                    $_SESSION['dados_user']= $metodos_principais->getProfessorPorId($_SESSION["user"]['id']);  // ou getProfessorPorId(), dependendo do tipo de usuário
+                                }
+                                
                                 echo "<p style='text-align: center; color: white; padding-top: 20px;'>Perfil atualizado com sucesso!</p>";
                             } else {
                                 echo "<p>Erro ao atualizar perfil. Tente novamente.</p>";
